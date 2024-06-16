@@ -75,7 +75,7 @@
         <video id="video-preview" playsinline></video>
         <div id="overlay"></div>
     </div>
-    <div id="result" style="display: none;"></div>
+    <div id="result" style="display: none;">Escaneando...</div>
     <button id="startScan">Iniciar Escaneo</button>
 
     <!-- Sonido de "bip" -->
@@ -88,22 +88,29 @@
             const codeReader = new ZXing.BrowserMultiFormatReader();
             const videoElement = document.getElementById('video-preview');
             const beepSound = document.getElementById('beep-sound');
+            const resultElement = document.getElementById('result');
             let scanning = false;
 
             document.getElementById('startScan').addEventListener('click', () => {
                 if (!scanning) {
+                    // Actualizar UI para mostrar que se está escaneando
+                    resultElement.innerText = 'Escaneando...';
+                    resultElement.style.display = 'block';
+
                     codeReader.decodeFromVideoDevice(undefined, 'video-preview', (result, err) => {
                         if (result) {
                             beepSound.play(); // Reproduce el sonido de "bip"
-                            document.getElementById('result').innerText = 'Último Código Escaneado: ' + result.text;
-                            document.getElementById('result').style.display = 'block';
+                            resultElement.innerText = 'Último Código Escaneado: ' + result.text;
+                            resultElement.style.display = 'block';
                             codeReader.reset(); // Detener el escaneo después de encontrar un código
                             scanning = false;
-                        }
-                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                        } else if (err && !(err instanceof ZXing.NotFoundException)) {
                             console.error('Error al escanear el código:', err);
                             alert('Error al escanear el código. Intenta nuevamente.');
                         }
+                    }).catch((err) => {
+                        console.error('Error al acceder a la cámara:', err);
+                        alert('Error al acceder a la cámara. Por favor, verifica los permisos y vuelve a intentarlo.');
                     });
                     scanning = true;
                 }
