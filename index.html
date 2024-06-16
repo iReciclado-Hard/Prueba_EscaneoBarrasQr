@@ -1,9 +1,9 @@
-<!DOCTYPE html>134176
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escaneo de Códigos QR</title>
+    <title>Escaneo de Códigos QR y Barras</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,18 +13,35 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            background-color: #f8f9fa;
         }
         h1 {
             color: #343a40;
+            margin-bottom: 20px;
         }
         #scanner-container {
+            position: relative;
             margin-top: 20px;
             width: 100%;
             max-width: 500px;
+            height: auto;
             border: 1px solid #ced4da;
-            padding: 10px;
             background-color: #ffffff;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #video-preview {
+            width: 100%;
+        }
+        #overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 50%;
+            border: 3px dashed red;
+            pointer-events: none;
+            box-sizing: border-box;
         }
         #result {
             margin-top: 20px;
@@ -32,6 +49,9 @@
             border: 1px solid #ced4da;
             background-color: #e9ecef;
             border-radius: 5px;
+            font-size: 1.2em;
+            color: #495057;
+            text-align: center;
         }
         button {
             margin-top: 20px;
@@ -50,29 +70,35 @@
     </style>
 </head>
 <body>
-    <h1>Escaneo de Códigos QR</h1>
+    <h1>Escaneo de Códigos QR y Barras</h1>
     <div id="scanner-container">
-        <video id="video-preview" width="100%"></video>
+        <video id="video-preview" playsinline></video>
+        <div id="overlay"></div>
     </div>
     <div id="result" style="display: none;"></div>
-    <!-- Botón para iniciar el escaneo -->
     <button id="startScan">Iniciar Escaneo</button>
+
+    <!-- Sonido de "bip" -->
+    <audio id="beep-sound" src="https://www.soundjay.com/button/sounds/button-10.mp3" preload="auto"></audio>
 
     <!-- Incluye la librería ZXing -->
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const codeReader = new ZXing.BrowserQRCodeReader();
+            const codeReader = new ZXing.BrowserMultiFormatReader();
             const videoElement = document.getElementById('video-preview');
+            const beepSound = document.getElementById('beep-sound');
             let scanning = false;
 
-            // Agregar evento click al botón para iniciar el escaneo
             document.getElementById('startScan').addEventListener('click', () => {
                 if (!scanning) {
-                    codeReader.decodeFromInputVideoDevice(undefined, 'video-preview', (result, err) => {
+                    codeReader.decodeFromVideoDevice(undefined, 'video-preview', (result, err) => {
                         if (result) {
-                            document.getElementById('result').innerText = result.text;
+                            beepSound.play(); // Reproduce el sonido de "bip"
+                            document.getElementById('result').innerText = 'Último Código Escaneado: ' + result.text;
                             document.getElementById('result').style.display = 'block';
+                            codeReader.reset(); // Detener el escaneo después de encontrar un código
+                            scanning = false;
                         }
                         if (err && !(err instanceof ZXing.NotFoundException)) {
                             console.error('Error al escanear el código:', err);
