@@ -9,18 +9,49 @@
 <body>
     <div class="scanner-container">
         <h2>Escanear Código de Barras</h2>
-        <button id="startScan">Iniciar Escaneo</button>
-        <button id="stopScan" style="display:none;">Detener Escaneo</button>
+        <button id="startScan" class="btn">Iniciar Escaneo</button>
         <div id="video-container">
             <video id="video-preview" autoplay></video>
+            <div id="scan-frame"></div> <!-- Marco de escaneo -->
         </div>
         <div id="result"></div> <!-- Contenedor para mostrar el resultado del escaneo -->
-        <div id="productInfo"></div> <!-- Contenedor para mostrar la información del producto -->
     </div>
 
     <!-- Incluir ZXing y el sonido de bip -->
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <audio id="beep-sound" src="https://example.com/beep.mp3" preload="auto"></audio>
-    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeReader = new ZXing.BrowserMultiFormatReader();
+            const videoElement = document.getElementById('video-preview');
+            const beepSound = document.getElementById('beep-sound');
+            const resultElement = document.getElementById('result');
+            let scanning = false;
+
+            document.getElementById('startScan').addEventListener('click', () => {
+                if (!scanning) {
+                    resultElement.innerText = "Escaneando...";
+                    resultElement.style.display = 'block';
+
+                    codeReader.decodeFromVideoDevice(undefined, 'video-preview', (result, err) => {
+                        if (result) {
+                            beepSound.play();
+                            resultElement.innerText = `Último Código Escaneado: ${result.text}`;
+                            resultElement.style.display = 'block';
+                            codeReader.reset(); // Detener el escaneo después de encontrar un código
+                            scanning = false;
+                        }
+                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                            console.error('Error al escanear el código:', err);
+                        }
+                    }).catch((err) => {
+                        console.error('Error al acceder a la cámara:', err);
+                        alert('Error al acceder a la cámara. Por favor, verifica los permisos y vuelve a intentarlo.');
+                    });
+                    scanning = true;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
