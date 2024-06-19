@@ -13,17 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const cameras = await codeReader.listVideoInputDevices();
                 if (cameras.length > 0) {
-                    // Inicia el escaneo con la primera cámara disponible
                     codeReader.decodeFromVideoDevice(cameras[0].deviceId, 'video-preview', (result, err) => {
                         if (result) {
                             beepSound.play();
-                            resultElement.innerText = `Último Código Escaneado: ${result.text}`;
-                            resultElement.style.display = 'block';
-                            displayProductData(result.text);
-                            codeReader.reset(); // Detener el escaneo después de encontrar un código
+                            const scannedCode = result.text;
+                            resultElement.innerText = `Último Código Escaneado: ${scannedCode}`;
+                            displayProductData(scannedCode);
+                            codeReader.reset();
                             scanning = false;
-                        }
-                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                        } else if (err && !(err instanceof ZXing.NotFoundException)) {
                             console.error('Error al escanear el código:', err);
                         }
                     });
@@ -49,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url);
             if (!response.ok) throw new Error('Error al obtener los datos');
             const data = await response.json();
+            console.log('Datos obtenidos de la hoja:', data.values); // Añade esta línea para depurar
             return data.values; // Devuelve los valores de la hoja de cálculo
         } catch (error) {
             console.error('Error fetching sheet data:', error);
@@ -71,9 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (rowData['BarCode'] === code) { // Busca en la columna "Código"
+                console.log('Producto encontrado:', rowData); // Añade esta línea para depurar
                 return rowData; // Devuelve la fila completa como un objeto si encuentra el código
             }
         }
+        console.log('Producto no encontrado para el código:', code); // Añade esta línea para depurar
         return null; // Devuelve null si no se encuentra el código
     }
 
@@ -82,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
         findProductData(code).then(productData => {
             if (productData) {
                 const productContainer = document.getElementById('result');
-                // Limpiamos el contenedor
                 productContainer.innerHTML = `
                     <p><strong>Nombre del Artículo:</strong> ${productData['Nombre del Artículo']}</p>
                     <p><strong>Precio:</strong> ${productData['Precio']}</p>
@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alert('Producto no encontrado.');
             }
+        }).catch(err => {
+            console.error('Error al buscar el producto:', err);
         });
     }
 });
