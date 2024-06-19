@@ -19,3 +19,30 @@ async function fetchSheetData() {
         return null;
     }
 }
+
+// Función para encontrar datos del producto por código
+async function findProductData(code) {
+    const data = await fetchSheetData();
+    if (!data) return null;
+
+    const header = data[0]; // La primera fila se asume que es el encabezado de las columnas
+    const rows = data.slice(1); // Las filas de datos, omitiendo el encabezado
+
+    for (const row of rows) {
+        const rowData = {};
+        row.forEach((cell, index) => {
+            rowData[header[index]] = cell; // Mapea las celdas de cada fila a sus respectivos nombres de columna
+        });
+
+        // Depuración: Mostrar el código escaneado y el código de la fila
+        console.log(`Comparando código escaneado: ${code} con código en fila: ${rowData['Código']}`);
+
+        if (rowData['Código'] === code) { // Busca en la columna "Código"
+            console.log('Producto encontrado:', rowData); // Añade esta línea para depurar
+            return rowData; // Devuelve la fila completa como un objeto si encuentra el código
+        }
+    }
+
+    console.log('Producto no encontrado para el código:', code); // Añade esta línea para depurar
+    return null; // Devuelve null si no se encuentra el código
+}
